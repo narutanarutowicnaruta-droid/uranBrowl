@@ -65,7 +65,17 @@
 
 <div id="hangar-m" class="modal"><h2>АНГАР</h2><div class="scroll" id="h-list"></div><button class="btn" style="margin-top:20px" onclick="closeM('hangar-m')">ЗАКРИТИ</button></div>
 <div id="pass-m" class="modal"><h2>URAN PASS</h2><div class="scroll" id="pass-list"></div><button class="btn" style="margin-top:20px" onclick="closeM('pass-m')">ЗАКРИТИ</button></div>
-<div id="shop-m" class="modal"><h2>МАГАЗИН</h2><div class="scroll"><div class="card"><h3>КЕЙС</h3><p>100 🔑</p><button class="btn" onclick="buyCase()">ВІДКРИТИ</button></div></div><button class="btn" style="margin-top:20px" onclick="closeM('shop-m')">ЗАКРИТИ</button></div>
+
+<div id="shop-m" class="modal">
+    <h2>МАГАЗИН</h2>
+    <div class="scroll">
+        <div class="card"><h3>КЕЙС</h3><p>100 🔑</p><button class="btn" onclick="buyCase()">ВІДКРИТИ</button></div>
+        <div class="card"><h3>GOLD СКІН</h3><p>1000 🔑</p><button class="btn" onclick="buyDirectSkin('GOLD', '#ffd700')">КУПИТИ</button></div>
+        <div class="card"><h3>NIGHT СКІН</h3><p>1000 🔑</p><button class="btn" onclick="buyDirectSkin('NIGHT', '#1a1a1a')">КУПИТИ</button></div>
+    </div>
+    <button class="btn" style="margin-top:20px" onclick="closeM('shop-m')">ЗАКРИТИ</button>
+</div>
+
 <div id="skin-m" class="modal"><h2>ВИБІР СКІНА</h2><div class="scroll" id="s-list"></div><button class="btn" style="margin-top:20px" onclick="closeM('skin-m')">ЗАКРИТИ</button></div>
 <div id="promo-m" class="modal"><h2>ПРОМОКОД</h2><input type="text" id="promo-in" style="font-size:30px; text-align:center;"><button class="btn" style="margin-top:10px" onclick="usePromo()">ВВЕСТИ</button><button class="btn" onclick="closeM('promo-m')">НАЗАД</button></div>
 
@@ -74,6 +84,7 @@
 <div id="gadget-f" onclick="useGadget()">F</div>
 
 <script>
+// ТВІЙ СПИСОК ТАНКІВ
 const allTanks = [
     {id:0, n:"T-34", c:"#4caf50", hp:800, d:180, p:0, g:"Heal"},
     {id:1, n:"PANZER", c:"#9e9e9e", hp:1200, d:220, p:0, g:"Shield"},
@@ -88,6 +99,7 @@ const allTanks = [
     {id:10, n:"URAN-GIANT", c:"#fff", hp:15000, d:3000, p:7000, g:"God"}
 ];
 
+// ВИКОРИСТОВУЄМО ТВІЙ КЛЮЧ ЗБЕРЕЖЕННЯ
 let p = JSON.parse(localStorage.getItem('URAN_FINAL_STABLE')) || {
     chips: 500, micro: 0, cups: 0, owned: [0, 1], skins: [], sel: 0, selSkin: 'none', promos: []
 };
@@ -148,13 +160,16 @@ function buyCase() {
     }
 }
 
+function buyDirectSkin(name, color) {
+    if(p.chips >= 1000) { p.chips -= 1000; p.skins.push({name, color}); save(); alert("СКІН КУПЛЕНО!"); }
+}
+
 function usePromo() {
     let code = document.getElementById('promo-in').value.toUpperCase();
     if(p.promos.includes(code)) return alert("Вже використано!");
     if(code === 'URAN') { p.chips += 5000; p.promos.push(code); save(); closeM('promo-m'); }
 }
 
-// МАЛЮВАННЯ (БЕЗ ПОМИЛОК)
 function drawTank(c, x, y, bA, tA, tank, isEnemy, showShield) {
     c.save(); c.translate(x, y); 
     if(showShield) { c.strokeStyle="#00f2ff"; c.lineWidth=6; c.beginPath(); c.arc(0,0,65,0,7); c.stroke(); }
@@ -228,7 +243,19 @@ function loop() {
         });
 
         drawTank(ctx, g.px-cx, g.py-cy, g.pa, g.ta, allTanks.find(t=>t.id===p.sel), false, g.shield);
-        if(g.hp <= 0 || g.enemies.length === 0) { p.cups += 20; p.chips += 150; save(); location.reload(); }
+        
+        // ФІКС ВИХОДУ: тепер точно працює
+        if(g.hp <= 0) { 
+            g.active = false; 
+            alert("ВАС ЗНИЩЕНО!"); 
+            location.reload(); 
+        }
+        if(g.enemies.length === 0) { 
+            g.active = false;
+            p.cups += 20; p.chips += 150; save(); 
+            alert("ПЕРЕМОГА!"); 
+            location.reload(); 
+        }
     } else {
         let v = document.getElementById('tank-view').getContext('2d');
         v.clearRect(0,0,500,300);
